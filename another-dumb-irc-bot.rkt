@@ -1,17 +1,17 @@
 #lang racket
 ;dumb rizon bot does some stuff probably
-(require irc-client)
-
-;provides bot-nick, bot-pass, bot-username, and bot-realname
-;all strings used for bot to connect and identify
-(require "bot-info.rkt")
+(require irc-client
+         "commands.rkt"
+         "bot-info.rkt") ;provides bot-nick, bot-pass, bot-username, and bot-realname:
+                         ;  all strings used for bot to connect and identify
+                         ;(too lazy for config file)
 
 (define-values (conn ready-evt) (irc-connect "irc.rizon.net" 6667
                                              bot-nick bot-username bot-realname))
 (sync ready-evt)
 
 ;idenfity and turn vhost on
-(irc-send-message! conn "NickServ" (string-join "IDENTIFY" bot-pass))
+(irc-send-message! conn "NickServ" (string-join (list "IDENTIFY" bot-pass)))
 (irc-send-message! conn "HostServ" "ON")
 
 ;main loop function that eats and parses irc messages (mostly just prints them right now)
@@ -20,7 +20,7 @@
   (when (match (irc-recv! conn)
           [(IrcMessage-ChatMessage _ sender recipient content)
            (printf "(~a) <~a> ~a\n" recipient (IrcUser-nick sender) content)
-           (check-and-run-commands sender recipient content)]
+           (not (equal? (check-and-run-commands conn sender recipient content) 'break))]
           [(IrcMessage-ActionMessage _ sender recipient content)
            (printf "(~a) * ~a ~a\n" recipient (IrcUser-nick sender) content)]
           [(IrcMessage-Notice _ sender recipient content)
@@ -40,12 +40,6 @@
           [(IrcMessage other) (printf "~a\n" other)]
           [_ (printf "ERR?") #f])
     (main-loop)))
-
-;if content is a command and sender is able to run said command, run it, sending output to relevant place
-;recipient will either be a channel or bot-nick
-(define (check-and-run-commands sender recipient content)
-  '())
-
 
 ;start up main-loop
 (main-loop)
