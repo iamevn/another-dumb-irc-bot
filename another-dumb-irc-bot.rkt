@@ -20,7 +20,7 @@
   (when (match (irc-recv! conn)
           [(IrcMessage-ChatMessage _ sender recipient content)
            (printf "(~a) <~a> ~a\n" recipient (IrcUser-nick sender) content)
-           (not (equal? (check-and-run-commands conn sender recipient content) 'break))]
+           (not (equal? (check-and-run-commands! conn sender recipient content) 'break))]
           [(IrcMessage-ActionMessage _ sender recipient content)
            (printf "(~a) * ~a ~a\n" recipient (IrcUser-nick sender) content)]
           [(IrcMessage-Notice _ sender recipient content)
